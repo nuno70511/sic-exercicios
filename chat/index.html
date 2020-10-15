@@ -2,24 +2,57 @@
 <html>
   <head>
     <title>Socket.IO chat</title>
+
+    <!-- materialize css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      /* * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font: 13px Helvetica, Arial; }
       form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
       form input { border: 0; padding: 10px; width: 90%; margin-right: 0.5%; }
       form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
       #messages { list-style-type: none; margin: 0; padding: 0; }
       #messages li { padding: 5px 10px; }
-      #messages li:nth-child(odd) { background: #eee; }
-      .message-nick { padding-right: 1em; }
-      .message-date { margin-left: 2em; }
+      #messages li:nth-child(odd) { background: #eee; } */
+
+      #messages { overflow: auto; height: 80vh; }
+      .card-panel .row { margin-bottom: 0; }
+      .chat-box { position: fixed; bottom: 0; width: 100% }
+      .message { word-wrap: break-word; }
     </style>
+
+    <!-- jam icons -->
+    <link rel="stylesheet" href="https://unpkg.com/jam-icons/css/jam.min.css">
+
+    <!-- materialize javascript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   </head>
   <body>
-    <ul id="messages"></ul>
-    <form action="">
-      <input id="m" autocomplete="off" /><button>Send</button>
-    </form>
+    <div class="container">
+      <div id="messages"></div>
+    </div>
+    <div class="chat-box">
+      <div class="container">
+        <div class="row">
+          <form action="" class="col s12">
+            <div class="row">
+              <div class="input-field col s10">
+                <textarea id="m" class="materialize-textarea"></textarea>
+                <label for="m">Mensagem</label>
+              </div>
+              <div class="input-field col s2">
+                <button class="btn waves-effect waves-light" type="submit" name="action">Enviar
+                  <!-- <i class="material-icons right">send</i> -->
+                  <span class="jam jam-paper-plane"></span>
+                </button>
+              </div>
+            </div>
+            <!-- <input id="m" autocomplete="off" /><button>Send</button> -->
+          </form>
+        </div>
+      </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
@@ -40,18 +73,61 @@
             socket.on('chat message', function(msg, nickname, date){
                 //$('#messages').append($('<li>').text(msg));
                 let d = new Date(date);
-                document.querySelector("#messages").innerHTML += `
-                    <li>
-                        <b class="message-nick">${nickname}: </b>
-                        ${msg}
-                        <small class="message-date">às ${d.getHours()}:${d.getMinutes()}</small>
-                    </li>
-                `
+
+                let messagesDiv = document.querySelector("#messages");
+
+                // apresentar mensagens do próprio utilizador à direita
+                // e as restantes à esquerda
+                if (selfNickname !== nickname) {
+                  messagesDiv.innerHTML += `
+                    <div class="row">
+                      <div class="col s12 m5">
+                        <div class="card-panel grey lighten-4">
+                          <div class="row">
+                            <div class="col s2">
+                              <span>${nickname}</span>
+                            </div>
+                            <div class="col s10">
+                              <span class="black-text message">${msg}</span>
+                              <div>
+                                <small>${d.getHours()}:${d.getMinutes()}</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `
+                } else {
+                  messagesDiv.innerHTML += `
+                    <div class="row">
+                      <div class="col s12 m5 offset-m7">
+                        <div class="card-panel teal">
+                          <div class="row">
+                            <div class="col s2">
+                              <span>${nickname}</span>
+                            </div>
+                            <div class="col s10">
+                              <span class="black-text message">${msg}</span>
+                              <div>
+                                <small>${d.getHours()}:${d.getMinutes()}</small>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  `
+              }
+
+              // scroll automático no envio ou receção de novas mensagens
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                
             });
             socket.on('user connected', function(nickname){
                 // só alertar ao utilizador quando não for o próprio a entrar na sala
                 if (selfNickname !== nickname) {
-                    alert(`${nickname} joined the group.`);
+                  M.toast({html: `${nickname} joined the group.`, displayLength: 8000});
                 }
             });
         });
